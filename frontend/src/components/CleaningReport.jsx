@@ -1,4 +1,4 @@
-import { downloadCleanedCSV } from "../api/client";
+import { downloadCleanedExcel } from "../api/client";
 
 const ACTION_ICONS = {
   remove_duplicates:    { icon: "🔁", color: "var(--danger)" },
@@ -38,11 +38,11 @@ export default function CleaningReport({ report, cleanedProfile, sessionId, load
 
           {report && sessionId && (
             <button
-              id="download-csv-btn"
+              id="download-excel-btn"
               className="btn btn-secondary btn-sm"
-              onClick={() => downloadCleanedCSV(sessionId)}
+              onClick={() => downloadCleanedExcel(sessionId)}
             >
-              ⬇ Download CSV
+              ⬇ Download Excel
             </button>
           )}
         </div>

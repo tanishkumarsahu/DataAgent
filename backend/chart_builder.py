@@ -33,6 +33,69 @@ def _apply_dark_style(fig: plt.Figure, ax: plt.Axes) -> None:
     ax.grid(color=_GRID, linestyle="--", linewidth=0.5, alpha=0.6)
 
 
+def validate_chart_spec(
+    df: pd.DataFrame,
+    chart_type: str,
+    x_column: str = "",
+    y_column: str = "",
+) -> str | None:
+    """Check if a chart can be rendered. Returns None if OK, or an error message string."""
+    valid_types = {"line", "bar", "scatter", "hist", "box", "heatmap"}
+    if chart_type not in valid_types:
+        return f"Unsupported chart type '{chart_type}'. Choose from: {', '.join(sorted(valid_types))}."
+
+    if chart_type == "heatmap":
+        num_cols = df.select_dtypes(include=np.number).columns
+        num_cols = [c for c in num_cols if not c.startswith("_outlier_")]
+        if len(num_cols) < 2:
+            return "Heatmap requires at least 2 numeric columns in the dataset."
+        return None
+
+    if chart_type == "hist":
+        target = x_column or y_column
+        if not target:
+            return "Histogram requires an X or Y column to be selected."
+        if target not in df.columns:
+            return f"Column '{target}' not found in the dataset."
+        if not pd.api.types.is_numeric_dtype(df[target]):
+            return f"Column '{target}' must be numeric for a histogram."
+        return None
+
+    if not x_column:
+        return f"'{chart_type}' chart requires an X-axis column."
+    if not y_column:
+        return f"'{chart_type}' chart requires a Y-axis column."
+    if x_column not in df.columns:
+        return f"X-axis column '{x_column}' not found in the dataset."
+    if y_column not in df.columns:
+        return f"Y-axis column '{y_column}' not found in the dataset."
+
+    if chart_type in {"line", "scatter"}:
+        if not pd.api.types.is_numeric_dtype(df[y_column]):
+            return f"Y-axis column '{y_column}' must be numeric for a {chart_type} chart."
+
+    return None
+
+
+def build_chart_from_params(
+    df: pd.DataFrame,
+    chart_type: str,
+    x_column: str = "",
+    y_column: str = "",
+    hue_column: str = "",
+    title: str = "",
+) -> bytes | None:
+    """Build a chart from individual parameters (no AI involved)."""
+    spec = {
+        "chart_type": chart_type,
+        "x": x_column,
+        "y": y_column,
+        "hue": hue_column,
+        "title": title or f"{chart_type.title()} Chart",
+    }
+    return build_chart_png(spec, df)
+
+
 def build_chart_png(spec: dict[str, Any], df: pd.DataFrame) -> bytes | None:
     """Convert a chart spec dict + DataFrame into PNG bytes."""
 
@@ -54,21 +117,26 @@ def build_chart_png(spec: dict[str, Any], df: pd.DataFrame) -> bytes | None:
     fig, ax = plt.subplots(figsize=(10, 5.5), dpi=120)
     _apply_dark_style(fig, ax)
 
+    hue_val = hue or None
+    kwargs = {}
+    if hue_val:
+        kwargs["palette"] = _PALETTE
+
     try:
         if chart_type == "line" and x and y:
-            sns.lineplot(data=df, x=x, y=y, hue=hue or None, ax=ax, palette=_PALETTE)
+            sns.lineplot(data=df, x=x, y=y, hue=hue_val, ax=ax, **kwargs)
         elif chart_type == "bar" and x and y:
-            sns.barplot(data=df, x=x, y=y, hue=hue or None, ax=ax,
-                        estimator=np.mean, palette=_PALETTE)
+            sns.barplot(data=df, x=x, y=y, hue=hue_val, ax=ax,
+                        estimator=np.mean, **kwargs)
         elif chart_type == "scatter" and x and y:
-            sns.scatterplot(data=df, x=x, y=y, hue=hue or None,
-                            ax=ax, palette=_PALETTE, alpha=0.75)
+            sns.scatterplot(data=df, x=x, y=y, hue=hue_val,
+                            ax=ax, alpha=0.75, **kwargs)
         elif chart_type == "hist" and (x or y):
             target = x or y
-            sns.histplot(data=df, x=target, hue=hue or None,
-                         kde=True, ax=ax, color=_ACCENT)
+            sns.histplot(data=df, x=target, hue=hue_val,
+                         kde=True, ax=ax, color=_ACCENT if not hue_val else None)
         elif chart_type == "box" and x and y:
-            sns.boxplot(data=df, x=x, y=y, hue=hue or None, ax=ax, palette=_PALETTE)
+            sns.boxplot(data=df, x=x, y=y, hue=hue_val, ax=ax, **kwargs)
         elif chart_type == "heatmap":
             num = df.select_dtypes(include=np.number)
             num = num.loc[:, ~num.columns.str.startswith("_outlier_")]

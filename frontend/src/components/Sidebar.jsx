@@ -1,13 +1,12 @@
 import { useState } from "react";
 
 const GEMINI_MODELS = [
-  { value: "gemini-1.5-flash",   label: "Gemini 1.5 Flash (Fast)" },
-  { value: "gemini-1.5-pro",     label: "Gemini 1.5 Pro (Smart)" },
-  { value: "gemini-2.0-flash",   label: "Gemini 2.0 Flash" },
-  { value: "gemini-2.5-flash",   label: "Gemini 2.5 Flash (Latest)" },
+  { value: "gemini-2.0-flash",   label: "Gemini 2.0 Flash (Fast)" },
+  { value: "gemini-2.5-flash",   label: "Gemini 2.5 Flash" },
+  { value: "gemini-2.5-pro",     label: "Gemini 2.5 Pro (Smart)" },
 ];
 
-export default function Sidebar({ apiKey, setApiKey, modelName, setModelName, autoChart, setAutoChart, useCleaned, setUseCleaned }) {
+export default function Sidebar({ apiKey, setApiKey, modelName, setModelName, useCleaned, setUseCleaned }) {
   const [showKey, setShowKey] = useState(false);
   const [customModel, setCustomModel] = useState(false);
 
@@ -108,7 +107,7 @@ export default function Sidebar({ apiKey, setApiKey, modelName, setModelName, au
         </div>
         {!apiKey && (
           <p style={{ fontSize: ".7rem", color: "var(--warn)", marginTop: ".35rem" }}>
-            ⚠ Required for chat &amp; charts
+            ⚠ Required for chat
           </p>
         )}
         {apiKey && (
@@ -144,13 +143,13 @@ export default function Sidebar({ apiKey, setApiKey, modelName, setModelName, au
               type="text"
               value={modelName}
               onChange={e => setModelName(e.target.value)}
-              placeholder="gemini-1.5-flash"
+              placeholder="gemini-2.0-flash"
               autoFocus
             />
             <button
               className="btn btn-ghost btn-sm"
               style={{ fontSize: ".72rem" }}
-              onClick={() => { setCustomModel(false); setModelName("gemini-1.5-flash"); }}
+              onClick={() => { setCustomModel(false); setModelName("gemini-2.0-flash"); }}
             >
               ← Back to presets
             </button>
@@ -163,17 +162,45 @@ export default function Sidebar({ apiKey, setApiKey, modelName, setModelName, au
         <label style={{ fontSize: ".75rem", fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: ".06em" }}>
           Options
         </label>
-        <Toggle id="auto-chart-toggle" label="Auto-generate chart" checked={autoChart} onChange={setAutoChart} />
-        <Toggle id="use-cleaned-toggle" label="Use cleaned data for chat" checked={useCleaned} onChange={setUseCleaned} />
+        <Toggle id="use-cleaned-toggle" label="Use cleaned data" checked={useCleaned} onChange={setUseCleaned} />
       </div>
 
       <div style={{ flex: 1 }} />
 
+      {/* Flow steps */}
+      <div style={{
+        background: "var(--bg-card2)",
+        borderRadius: "var(--radius-sm)",
+        padding: ".75rem .9rem",
+        border: "1px solid var(--border)",
+      }}>
+        <p style={{ fontSize: ".65rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: ".5rem", fontWeight: 600 }}>
+          Workflow
+        </p>
+        {[
+          { num: "1", label: "Upload data" },
+          { num: "2", label: "View overview" },
+          { num: "3", label: "Clean dataset" },
+          { num: "4", label: "Chat with AI" },
+          { num: "5", label: "Build graphs" },
+        ].map(s => (
+          <div key={s.num} className="flex items-center gap-2" style={{ marginBottom: ".3rem", fontSize: ".72rem" }}>
+            <span style={{
+              width: 18, height: 18, borderRadius: "50%",
+              background: "var(--bg-base)",
+              border: "1px solid var(--border)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: ".6rem", fontWeight: 700, color: "var(--text-muted)",
+              flexShrink: 0,
+            }}>{s.num}</span>
+            <span style={{ color: "var(--text-secondary)" }}>{s.label}</span>
+          </div>
+        ))}
+      </div>
+
       {/* Footer */}
-      <p style={{ fontSize: ".68rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
-        Upload a <strong style={{ color: "var(--text-secondary)" }}>.csv</strong> or{" "}
-        <strong style={{ color: "var(--text-secondary)" }}>.xlsx</strong> file, then clean,
-        explore, and chat with your data.
+      <p style={{ fontSize: ".65rem", color: "var(--text-muted)", lineHeight: 1.6, marginTop: ".25rem" }}>
+        No data ever leaves your machine — all processing is local.
       </p>
     </aside>
   );

@@ -66,7 +66,7 @@ export default function DataOverview({ profile, filename }) {
           Data Preview <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>(first 30 rows)</span>
         </h3>
         <div className="data-table-wrap">
-          <table className="data-table">
+          <table className="data-table excel-table">
             <thead>
               <tr>
                 <th style={{ color: "var(--text-muted)" }}>#</th>

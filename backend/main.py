@@ -12,6 +12,7 @@ Routes:
 from __future__ import annotations
 
 import base64
+import os
 import uuid
 from typing import Any
 
@@ -21,8 +22,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 
-from chart_builder import build_chart_png
-from data_handler import auto_clean, dataframe_to_csv_bytes, load_file, profile_dataframe
+from chart_builder import build_chart_from_params, build_chart_png, validate_chart_spec
+from data_handler import auto_clean, dataframe_to_excel_bytes, load_file, profile_dataframe
 from llm_agent import get_or_create_agent, infer_chart_spec, reset_agent
 
 # ---------------------------------------------------------------------------
@@ -62,7 +63,6 @@ async def upload_file(file: UploadFile = File(...)) -> dict[str, Any]:
     """Accept a CSV or XLSX file and return its profile + a session_id."""
 
     allowed = {".csv", ".xlsx", ".xls"}
-    import os
     ext = os.path.splitext(file.filename or "")[1].lower()
     if ext not in allowed:
         raise HTTPException(400, f"Unsupported file type '{ext}'. Use .csv or .xlsx.")
@@ -106,7 +106,7 @@ class ChatRequest(BaseModel):
     session_id: str
     question: str
     api_key: str
-    model_name: str = "gemini-1.5-flash"
+    model_name: str = "gemini-2.0-flash"
     use_cleaned: bool = True
 
 
@@ -133,7 +133,7 @@ class ChartRequest(BaseModel):
     session_id: str
     question: str
     api_key: str
-    model_name: str = "gemini-1.5-flash"
+    model_name: str = "gemini-2.0-flash"
     use_cleaned: bool = True
 
 
@@ -156,21 +156,60 @@ def generate_chart(req: ChartRequest) -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
+# Manual Chart — user picks columns & chart type (no AI involved)
+# ---------------------------------------------------------------------------
+
+class ManualChartRequest(BaseModel):
+    session_id: str
+    chart_type: str
+    x_column: str = ""
+    y_column: str = ""
+    hue_column: str = ""
+    title: str = ""
+    use_cleaned: bool = True
+
+
+@app.post("/api/manual-chart")
+def manual_chart(req: ManualChartRequest) -> dict[str, Any]:
+    """Generate a chart from user-selected columns and chart type."""
+
+    df = _get_frame(req.session_id, raw=not req.use_cleaned)
+
+    error = validate_chart_spec(df, req.chart_type, req.x_column, req.y_column)
+    if error:
+        return {"chart": None, "error": error}
+
+    png_bytes = build_chart_from_params(
+        df,
+        chart_type=req.chart_type,
+        x_column=req.x_column,
+        y_column=req.y_column,
+        hue_column=req.hue_column,
+        title=req.title,
+    )
+    if not png_bytes:
+        return {"chart": None, "error": "Chart could not be rendered. Check your column selections."}
+
+    encoded = base64.b64encode(png_bytes).decode("utf-8")
+    return {"chart": encoded, "error": None}
+
+
+# ---------------------------------------------------------------------------
 # Download cleaned CSV
 # ---------------------------------------------------------------------------
 
 @app.get("/api/download")
-def download_csv(session_id: str) -> StreamingResponse:
-    """Return the cleaned DataFrame as a downloadable CSV."""
+def download_excel(session_id: str) -> StreamingResponse:
+    """Return the cleaned DataFrame as a downloadable Excel file."""
 
     df = _get_frame(session_id, raw=False)
-    csv_bytes = dataframe_to_csv_bytes(df)
+    excel_bytes = dataframe_to_excel_bytes(df)
 
     import io
     return StreamingResponse(
-        io.BytesIO(csv_bytes),
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=cleaned_data.csv"},
+        io.BytesIO(excel_bytes),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=cleaned_data.xlsx"},
     )
 
 

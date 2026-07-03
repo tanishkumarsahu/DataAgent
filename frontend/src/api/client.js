@@ -28,7 +28,7 @@ export async function cleanData(sessionId) {
 }
 
 /** Ask the LLM a question. Returns { answer } */
-export async function chatWithData({ sessionId, question, apiKey, modelName = "gpt-4o", useCleaned = true }) {
+export async function chatWithData({ sessionId, question, apiKey, modelName = "gemini-2.0-flash", useCleaned = true }) {
   const res = await fetch(`${BASE}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -44,7 +44,7 @@ export async function chatWithData({ sessionId, question, apiKey, modelName = "g
 }
 
 /** Generate a chart PNG (base64) from a question. Returns { chart, spec } */
-export async function generateChart({ sessionId, question, apiKey, modelName = "gpt-4o", useCleaned = true }) {
+export async function generateChart({ sessionId, question, apiKey, modelName = "gemini-2.0-flash", useCleaned = true }) {
   const res = await fetch(`${BASE}/api/chart`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -59,12 +59,30 @@ export async function generateChart({ sessionId, question, apiKey, modelName = "
   return _handleResponse(res);
 }
 
-/** Download the cleaned CSV — triggers a browser download */
-export function downloadCleanedCSV(sessionId) {
+/** Generate a chart manually — user picks columns & chart type. Returns { chart, error } */
+export async function generateManualChart({ sessionId, chartType, xColumn, yColumn, hueColumn, title, useCleaned = true }) {
+  const res = await fetch(`${BASE}/api/manual-chart`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      session_id:   sessionId,
+      chart_type:   chartType,
+      x_column:     xColumn,
+      y_column:     yColumn,
+      hue_column:   hueColumn,
+      title:        title,
+      use_cleaned:  useCleaned,
+    }),
+  });
+  return _handleResponse(res);
+}
+
+/** Download the cleaned Excel — triggers a browser download */
+export function downloadCleanedExcel(sessionId) {
   const url = `${BASE}/api/download?session_id=${encodeURIComponent(sessionId)}`;
   const a = document.createElement("a");
   a.href = url;
-  a.download = "cleaned_data.csv";
+  a.download = "cleaned_data.xlsx";
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

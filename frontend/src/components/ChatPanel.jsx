@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { chatWithData, generateChart } from "../api/client";
+import { chatWithData } from "../api/client";
 
 function Message({ msg }) {
   const isUser = msg.role === "user";
@@ -34,20 +34,6 @@ function Message({ msg }) {
         }}>
           {msg.content}
         </div>
-        {/* Chart image */}
-        {msg.chart && (
-          <div style={{ marginTop: ".5rem" }}>
-            <img
-              src={`data:image/png;base64,${msg.chart}`}
-              alt="Generated chart"
-              style={{
-                width: "100%",
-                borderRadius: "var(--radius-sm)",
-                border: "1px solid var(--border)",
-              }}
-            />
-          </div>
-        )}
         <div style={{ fontSize: ".67rem", color: "var(--text-muted)", marginTop: ".25rem",
           textAlign: isUser ? "right" : "left" }}>
           {new Date(msg.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -95,7 +81,7 @@ function TypingIndicator() {
   );
 }
 
-export default function ChatPanel({ sessionId, apiKey, modelName, autoChart, useCleaned }) {
+export default function ChatPanel({ sessionId, apiKey, modelName, useCleaned }) {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
@@ -130,17 +116,11 @@ export default function ChatPanel({ sessionId, apiKey, modelName, autoChart, use
     setBusy(true);
 
     try {
-      const [chatRes, chartRes] = await Promise.all([
-        chatWithData({ sessionId, question: q, apiKey, modelName, useCleaned }),
-        autoChart
-          ? generateChart({ sessionId, question: q, apiKey, modelName, useCleaned })
-          : Promise.resolve(null),
-      ]);
+      const chatRes = await chatWithData({ sessionId, question: q, apiKey, modelName, useCleaned });
 
       setMessages(m => [...m, {
         role: "assistant",
         content: chatRes.answer,
-        chart:   chartRes?.chart || null,
         ts:      Date.now(),
       }]);
     } catch (err) {
@@ -171,7 +151,7 @@ export default function ChatPanel({ sessionId, apiKey, modelName, autoChart, use
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className="step-badge step-active">3</div>
+          <div className="step-badge step-active">4</div>
           <div>
             <h2>Chat with Your Data</h2>
             <p style={{ fontSize: ".8rem", color: "var(--text-secondary)", marginTop: ".1rem" }}>
@@ -180,7 +160,7 @@ export default function ChatPanel({ sessionId, apiKey, modelName, autoChart, use
           </div>
         </div>
         <span className="badge badge-purple" style={{ fontSize: ".68rem" }}>
-          {modelName || "gemini-1.5-flash"}
+          {modelName || "gemini-2.0-flash"}
         </span>
       </div>
 

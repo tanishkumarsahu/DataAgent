@@ -5,12 +5,12 @@ import UploadPanel    from "./components/UploadPanel";
 import DataOverview   from "./components/DataOverview";
 import CleaningReport from "./components/CleaningReport";
 import ChatPanel      from "./components/ChatPanel";
+import GraphPanel     from "./components/GraphPanel";
 
 export default function App() {
   // Sidebar settings
   const [apiKey,     setApiKey]     = useState("");
-  const [modelName,  setModelName]  = useState("gemini-1.5-flash");
-  const [autoChart,  setAutoChart]  = useState(true);
+  const [modelName,  setModelName]  = useState("gemini-2.0-flash");
   const [useCleaned, setUseCleaned] = useState(true);
 
   // Session state
@@ -69,12 +69,11 @@ export default function App() {
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
       {/* Sidebar */}
-      <Sidebar
-        apiKey={apiKey}       setApiKey={setApiKey}
-        modelName={modelName} setModelName={setModelName}
-        autoChart={autoChart} setAutoChart={setAutoChart}
-        useCleaned={useCleaned} setUseCleaned={setUseCleaned}
-      />
+        <Sidebar
+          apiKey={apiKey}       setApiKey={setApiKey}
+          modelName={modelName} setModelName={setModelName}
+          useCleaned={useCleaned} setUseCleaned={setUseCleaned}
+        />
 
       {/* Main */}
       <main style={{
@@ -92,7 +91,7 @@ export default function App() {
             <span className="gradient-text">DataAgent</span>
           </h1>
           <p style={{ color: "var(--text-secondary)", marginTop: ".35rem", fontSize: ".9rem" }}>
-            Upload → Clean → Chat. Your AI data analyst, ready instantly.
+            Upload → Clean → Chat → Graph. Your AI data analyst, ready instantly.
           </p>
         </div>
 
@@ -120,7 +119,13 @@ export default function App() {
           sessionId={sessionId}
           apiKey={apiKey}
           modelName={modelName}
-          autoChart={autoChart}
+          useCleaned={useCleaned}
+        />
+
+        {/* Step 5: Graph */}
+        <GraphPanel
+          sessionId={sessionId}
+          profile={profile}
           useCleaned={useCleaned}
         />
       </main>

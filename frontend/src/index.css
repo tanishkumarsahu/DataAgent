@@ -191,6 +191,26 @@ p  { line-height: 1.65; }
 .mb-3   { margin-bottom: .75rem; }
 .mb-4   { margin-bottom: 1rem; }
 
+/* ── Enhanced card with glow border ──────────────────────────── */
+.card-glow {
+  border-color: rgba(124,58,237,.25);
+  box-shadow: 0 4px 32px rgba(0,0,0,.45), 0 0 40px rgba(124,58,237,.08);
+}
+
+/* ── Subtle section header accent ────────────────────────────── */
+.section-accent {
+  position: relative;
+  padding-left: 1rem;
+  border-left: 3px solid var(--accent);
+}
+
+/* ── Disabled / empty state overlay ──────────────────────────── */
+.state-empty {
+  opacity: 0.5;
+  pointer-events: none;
+  filter: grayscale(0.5);
+}
+
 /* ── Divider ──────────────────────────────────────────────────── */
 .divider {
   height: 1px;
@@ -258,6 +278,29 @@ p  { line-height: 1.65; }
 }
 .data-table tbody tr:hover { background: rgba(124,58,237,.07); }
 .data-table tbody tr:last-child td { border-bottom: none; }
+
+/* ── Excel Table Override ─────────────────────────────────────── */
+.excel-table {
+  border: 1px solid var(--border);
+}
+.excel-table th {
+  background: #1e1e2e;
+  border: 1px solid #2a2a45;
+  text-align: center;
+  font-weight: 700;
+  color: #cdd6f4;
+}
+.excel-table td {
+  border: 1px solid #2a2a45;
+  padding: .3rem .6rem;
+}
+.excel-table tbody tr:hover td { background: rgba(124,58,237,.1); }
+.excel-table td:first-child {
+  background: #1e1e2e;
+  text-align: center;
+  font-weight: 600;
+  color: #cdd6f4;
+}
 
 /* ── Loading spinner ──────────────────────────────────────────── */
 @keyframes spin { to { transform: rotate(360deg); } }

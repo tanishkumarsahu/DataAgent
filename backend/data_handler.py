@@ -212,6 +212,14 @@ def dataframe_to_csv_bytes(df: pd.DataFrame) -> bytes:
     return df.to_csv(index=False).encode("utf-8")
 
 
+def dataframe_to_excel_bytes(df: pd.DataFrame) -> bytes:
+    """Serialise a DataFrame to Excel (.xlsx) bytes."""
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False)
+    return output.getvalue()
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -236,7 +244,7 @@ def _df_to_json_records(df: pd.DataFrame) -> list[dict]:
                 rec[col] = val.item()
             elif isinstance(val, (np.integer, np.floating)):
                 rec[col] = val.item()
-            elif pd.isna(val) if not isinstance(val, (list, dict)) else False:
+            elif not isinstance(val, (list, dict)) and pd.isna(val):
                 rec[col] = None
             else:
                 rec[col] = str(val) if not isinstance(val, (int, float, bool, type(None), str)) else val

@@ -1,9 +1,3 @@
-"""llm_agent.py — LLM chat agent and chart spec inference.
-
-Uses the Google Gen AI Python SDK (google-genai >= 1.0).
-Supports any Gemini model (e.g. gemini-1.5-flash, gemini-1.5-pro, gemini-2.0-flash).
-"""
-
 from __future__ import annotations
 
 import json
@@ -17,12 +11,7 @@ from google import genai
 from google.genai import types
 
 
-# ---------------------------------------------------------------------------
-# Dataset context builder
-# ---------------------------------------------------------------------------
-
 def _build_context(df: pd.DataFrame) -> str:
-    """Produce a compact textual profile to inject into the LLM prompt."""
     lines: list[str] = [
         f"Rows: {len(df)}, Columns: {len(df.columns)}",
         f"Column names & dtypes: {', '.join(f'{c}({t})' for c, t in df.dtypes.items())}",
@@ -36,7 +25,7 @@ def _build_context(df: pd.DataFrame) -> str:
     cat_cols = df.select_dtypes(include="object").columns
     if len(cat_cols):
         lines.append("Categorical top values:")
-        for col in cat_cols[:6]:  # limit to avoid huge prompts
+        for col in cat_cols[:6]:
             top = df[col].value_counts().head(5).to_dict()
             lines.append(f"  {col}: {top}")
 
@@ -45,10 +34,6 @@ def _build_context(df: pd.DataFrame) -> str:
 
     return "\n".join(lines)
 
-
-# ---------------------------------------------------------------------------
-# Chat agent
-# ---------------------------------------------------------------------------
 
 _SYSTEM_PROMPT = (
     "You are DataAgent, an expert data analyst AI. "
@@ -61,19 +46,17 @@ _SYSTEM_PROMPT = (
 
 @dataclass
 class DataChatAgent:
-    """Wraps a Gemini client to answer questions about a DataFrame."""
-
     api_key: str
     model_name: str
     dataframe: pd.DataFrame
+    _client: Any = field(default=None, init=False, repr=False)
     _chat: Any = field(default=None, init=False, repr=False)
     _context_injected: bool = field(default=False, init=False, repr=False)
 
     def _get_chat(self):
-        """Lazily create or reuse the Gemini chat session."""
         if self._chat is None:
-            client = genai.Client(api_key=self.api_key)
-            self._chat = client.chats.create(
+            self._client = genai.Client(api_key=self.api_key)
+            self._chat = self._client.chats.create(
                 model=self.model_name,
                 config=types.GenerateContentConfig(
                     system_instruction=_SYSTEM_PROMPT,
@@ -83,7 +66,6 @@ class DataChatAgent:
         return self._chat
 
     def ask(self, question: str) -> str:
-        """Send a user question, maintain conversation history, return answer text."""
         chat = self._get_chat()
 
         if not self._context_injected:
@@ -99,10 +81,11 @@ class DataChatAgent:
 
         return response.text.strip()
 
+    def reset(self):
+        self._client = None
+        self._chat = None
+        self._context_injected = False
 
-# ---------------------------------------------------------------------------
-# Agent factory (one agent per session stored server-side in memory)
-# ---------------------------------------------------------------------------
 
 _agents: dict[str, DataChatAgent] = {}
 
@@ -113,22 +96,18 @@ def get_or_create_agent(
     model_name: str,
     df: pd.DataFrame,
 ) -> DataChatAgent:
-    """Return an existing agent for this session or create a new one."""
-    if session_id not in _agents or _agents[session_id].dataframe is not df:
-        _agents[session_id] = DataChatAgent(
-            api_key=api_key, model_name=model_name, dataframe=df
-        )
-    return _agents[session_id]
+    existing = _agents.get(session_id)
+    if existing is not None and existing.dataframe.equals(df) and existing.model_name == model_name:
+        return existing
+
+    agent = DataChatAgent(api_key=api_key, model_name=model_name, dataframe=df)
+    _agents[session_id] = agent
+    return agent
 
 
 def reset_agent(session_id: str) -> None:
-    """Clear the agent for a session (e.g. on new file upload)."""
     _agents.pop(session_id, None)
 
-
-# ---------------------------------------------------------------------------
-# Chart spec inference
-# ---------------------------------------------------------------------------
 
 _CHART_SCHEMA = (
     '{"make_chart": bool, '
@@ -146,8 +125,6 @@ def infer_chart_spec(
     api_key: str,
     model_name: str,
 ) -> dict[str, Any] | None:
-    """Ask Gemini to derive a chart specification from a natural-language question."""
-
     schema = ", ".join(f"{c}:{t}" for c, t in df.dtypes.items())
     prompt = (
         "You are a chart planner for a data analysis app. "
@@ -172,7 +149,6 @@ def infer_chart_spec(
         config=types.GenerateContentConfig(
             system_instruction="You are a JSON-only chart planner. Return only valid JSON.",
             temperature=0,
-            response_mime_type="application/json",
         ),
     )
     raw = (response.text or "").strip()
@@ -188,7 +164,15 @@ def infer_chart_spec(
 
 
 def _extract_json(text: str) -> Any:
-    """Strip markdown code fences then parse JSON."""
-    cleaned = re.sub(r"^```[a-z]*\n?", "", text.strip(), flags=re.IGNORECASE)
-    cleaned = re.sub(r"```$", "", cleaned.strip())
-    return json.loads(cleaned.strip())
+    cleaned = text.strip()
+
+    fence_match = re.search(r"```(?:json)?\s*\n?(.*?)```", cleaned, re.DOTALL | re.IGNORECASE)
+    if fence_match:
+        cleaned = fence_match.group(1).strip()
+
+    brace_start = cleaned.find("{")
+    brace_end = cleaned.rfind("}")
+    if brace_start != -1 and brace_end != -1 and brace_end > brace_start:
+        cleaned = cleaned[brace_start:brace_end + 1]
+
+    return json.loads(cleaned)
