@@ -39,7 +39,7 @@ app = FastAPI(title="DataAgent API", version="1.0.0")
 # Configure CORS origins
 frontend_url = os.getenv("FRONTEND_URL")
 if frontend_url:
-    origins = [o.strip() for o in frontend_url.split(",") if o.strip()]
+    origins = [o.strip().rstrip("/") for o in frontend_url.split(",") if o.strip()]
     origins.extend(["http://localhost:5173", "http://127.0.0.1:5173"])
 else:
     origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
@@ -252,5 +252,6 @@ def _get_frame(session_id: str, *, raw: bool) -> pd.DataFrame:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
 
