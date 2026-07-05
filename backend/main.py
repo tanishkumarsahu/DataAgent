@@ -17,6 +17,7 @@ import uuid
 from typing import Any
 
 import pandas as pd
+from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, StreamingResponse
@@ -26,15 +27,29 @@ from chart_builder import build_chart_from_params, build_chart_png, validate_cha
 from data_handler import auto_clean, dataframe_to_excel_bytes, load_file, profile_dataframe
 from llm_agent import get_or_create_agent, infer_chart_spec, reset_agent
 
+# Load environment variables
+load_dotenv()
+
 # ---------------------------------------------------------------------------
 # App setup
 # ---------------------------------------------------------------------------
 
 app = FastAPI(title="DataAgent API", version="1.0.0")
 
+# Configure CORS origins
+frontend_url = os.getenv("FRONTEND_URL")
+if frontend_url:
+    origins = [o.strip() for o in frontend_url.split(",") if o.strip()]
+    origins.extend(["http://localhost:5173", "http://127.0.0.1:5173"])
+else:
+    origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
+
+# Ensure unique origins
+origins = list(dict.fromkeys(origins))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],          # React dev server + production
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -105,7 +120,6 @@ def clean_data(session_id: str = Form(...)) -> dict[str, Any]:
 class ChatRequest(BaseModel):
     session_id: str
     question: str
-    api_key: str
     model_name: str = "gemini-2.0-flash"
     use_cleaned: bool = True
 
@@ -116,8 +130,12 @@ def chat(req: ChatRequest) -> dict[str, Any]:
 
     df = _get_frame(req.session_id, raw=not req.use_cleaned)
 
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise HTTPException(500, "GEMINI_API_KEY is not configured on the backend server.")
+
     try:
-        agent = get_or_create_agent(req.session_id, req.api_key, req.model_name, df)
+        agent = get_or_create_agent(req.session_id, api_key, req.model_name, df)
         answer = agent.ask(req.question)
     except Exception as exc:
         raise HTTPException(500, f"LLM error: {exc}") from exc
@@ -132,7 +150,6 @@ def chat(req: ChatRequest) -> dict[str, Any]:
 class ChartRequest(BaseModel):
     session_id: str
     question: str
-    api_key: str
     model_name: str = "gemini-2.0-flash"
     use_cleaned: bool = True
 
@@ -143,7 +160,11 @@ def generate_chart(req: ChartRequest) -> dict[str, Any]:
 
     df = _get_frame(req.session_id, raw=not req.use_cleaned)
 
-    spec = infer_chart_spec(req.question, df, req.api_key, req.model_name)
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise HTTPException(500, "GEMINI_API_KEY is not configured on the backend server.")
+
+    spec = infer_chart_spec(req.question, df, api_key, req.model_name)
     if not spec:
         return {"chart": None, "message": "No chart applicable for this question."}
 

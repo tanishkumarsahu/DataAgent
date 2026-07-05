@@ -9,9 +9,9 @@ import GraphPanel     from "./components/GraphPanel";
 
 export default function App() {
   // Sidebar settings
-  const [apiKey,     setApiKey]     = useState("");
   const [modelName,  setModelName]  = useState("gemini-2.0-flash");
   const [useCleaned, setUseCleaned] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Session state
   const [sessionId,      setSessionId]      = useState(null);
@@ -67,24 +67,38 @@ export default function App() {
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
+    <div className="app-container">
+      {/* Mobile Top Header */}
+      <header className="mobile-header">
+        <div className="flex items-center gap-2">
+          <span style={{ fontSize: "1.25rem" }}>🧹</span>
+          <h2 style={{ fontSize: "1.1rem", margin: 0 }}>DataAgent</h2>
+        </div>
+        <button
+          className="btn btn-secondary btn-sm"
+          onClick={() => setSidebarOpen(true)}
+          style={{ padding: ".4rem .6rem" }}
+        >
+          ⚙️ Settings
+        </button>
+      </header>
+
+      {/* Sidebar Backdrop Overlay on Mobile */}
+      <div
+        className={`sidebar-backdrop ${sidebarOpen ? "open" : ""}`}
+        onClick={() => setSidebarOpen(false)}
+      />
+
       {/* Sidebar */}
-        <Sidebar
-          apiKey={apiKey}       setApiKey={setApiKey}
-          modelName={modelName} setModelName={setModelName}
-          useCleaned={useCleaned} setUseCleaned={setUseCleaned}
-        />
+      <Sidebar
+        modelName={modelName} setModelName={setModelName}
+        useCleaned={useCleaned} setUseCleaned={setUseCleaned}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
 
       {/* Main */}
-      <main style={{
-        flex: 1,
-        padding: "2rem",
-        overflowY: "auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "2rem",
-        maxWidth: 960,
-      }}>
+      <main className="main-content">
         {/* Page title */}
         <div>
           <h1>
@@ -117,7 +131,6 @@ export default function App() {
         {/* Step 4: Chat */}
         <ChatPanel
           sessionId={sessionId}
-          apiKey={apiKey}
           modelName={modelName}
           useCleaned={useCleaned}
         />

@@ -6,8 +6,7 @@ const GEMINI_MODELS = [
   { value: "gemini-2.5-pro",     label: "Gemini 2.5 Pro (Smart)" },
 ];
 
-export default function Sidebar({ apiKey, setApiKey, modelName, setModelName, useCleaned, setUseCleaned }) {
-  const [showKey, setShowKey] = useState(false);
+export default function Sidebar({ modelName, setModelName, useCleaned, setUseCleaned, isOpen, onClose }) {
   const [customModel, setCustomModel] = useState(false);
 
   function handleModelSelect(e) {
@@ -22,31 +21,27 @@ export default function Sidebar({ apiKey, setApiKey, modelName, setModelName, us
   }
 
   return (
-    <aside style={{
-      width: 270,
-      flexShrink: 0,
-      background: "var(--bg-card)",
-      borderRight: "1px solid var(--border)",
-      padding: "1.5rem 1.25rem",
-      display: "flex",
-      flexDirection: "column",
-      gap: "1.5rem",
-      height: "100vh",
-      position: "sticky",
-      top: 0,
-      overflowY: "auto",
-    }}>
+    <aside className={`sidebar ${isOpen ? "open" : ""}`}>
       {/* Brand */}
       <div>
-        <div className="flex items-center gap-2 mb-1">
-          <div style={{
-            width: 34, height: 34,
-            borderRadius: 8,
-            background: "var(--accent-grad)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "1rem",
-          }}>🧹</div>
-          <h2 style={{ fontSize: "1.1rem" }}>DataAgent</h2>
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2">
+            <div style={{
+              width: 34, height: 34,
+              borderRadius: 8,
+              background: "var(--accent-grad)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "1rem",
+            }}>🧹</div>
+            <h2 style={{ fontSize: "1.1rem" }}>DataAgent</h2>
+          </div>
+          <button
+            className="sidebar-close-btn"
+            onClick={onClose}
+            aria-label="Close settings"
+          >
+            ✕
+          </button>
         </div>
         <p style={{ fontSize: ".72rem", color: "var(--text-muted)", lineHeight: 1.5 }}>
           AI-powered data cleaning &amp; insights
@@ -69,53 +64,6 @@ export default function Sidebar({ apiKey, setApiKey, modelName, setModelName, us
       </div>
 
       <div className="divider" style={{ margin: 0 }} />
-
-      {/* API Key */}
-      <div>
-        <label style={{ fontSize: ".75rem", fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: ".06em", display: "block", marginBottom: ".35rem" }}>
-          Gemini API Key
-        </label>
-        <p style={{ fontSize: ".68rem", color: "var(--text-muted)", marginBottom: ".5rem", lineHeight: 1.5 }}>
-          Get a free key at{" "}
-          <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer"
-            style={{ color: "#4285f4", textDecoration: "none" }}>
-            aistudio.google.com
-          </a>
-        </p>
-        <div style={{ position: "relative" }}>
-          <input
-            id="api-key-input"
-            className="input"
-            type={showKey ? "text" : "password"}
-            value={apiKey}
-            onChange={e => setApiKey(e.target.value)}
-            placeholder="AIza..."
-            style={{ paddingRight: "2.5rem" }}
-          />
-          <button
-            onClick={() => setShowKey(v => !v)}
-            style={{
-              position: "absolute", right: ".6rem", top: "50%",
-              transform: "translateY(-50%)",
-              background: "none", border: "none",
-              cursor: "pointer", color: "var(--text-muted)", fontSize: ".85rem",
-            }}
-            title={showKey ? "Hide" : "Show"}
-          >
-            {showKey ? "🙈" : "👁️"}
-          </button>
-        </div>
-        {!apiKey && (
-          <p style={{ fontSize: ".7rem", color: "var(--warn)", marginTop: ".35rem" }}>
-            ⚠ Required for chat
-          </p>
-        )}
-        {apiKey && (
-          <p style={{ fontSize: ".7rem", color: "var(--success, #10b981)", marginTop: ".35rem" }}>
-            ✓ API key set
-          </p>
-        )}
-      </div>
 
       {/* Model */}
       <div>

@@ -14,7 +14,7 @@ Upload a `.csv` or `.xlsx` file, let the automated pipeline clean it, then chat 
 | Backend | Python 3.11+ · FastAPI · uvicorn |
 | Data | pandas · numpy · openpyxl |
 | Charts | matplotlib · seaborn |
-| LLM | OpenAI API (gpt-4o or any compatible model) |
+| LLM | Gemini API (gemini-2.0-flash or compatible model) |
 
 ---
 
@@ -67,13 +67,15 @@ npm run dev
 
 ### 3 — Use It
 
-1. Open `http://localhost:5173`
-2. Paste your OpenAI API key in the sidebar
+1. Configure your environment:
+   - In `backend/`, copy `.env.example` to `.env` and fill in your `GEMINI_API_KEY`.
+   - In `frontend/`, copy `.env.example` to `.env` (the defaults work for local dev).
+2. Open `http://localhost:5173`
 3. Drag & drop a `.csv` or `.xlsx` file
 4. Review the dataset overview
 5. Click **Run Cleaner** to auto-clean
 6. Download the cleaned CSV
-7. Chat with your data using natural language
+7. Chat with your data using natural language (powered by Gemini)
 
 ---
 

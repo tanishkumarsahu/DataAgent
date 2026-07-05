@@ -1,6 +1,6 @@
 /* API client — all fetch calls to the FastAPI backend centralised here */
 
-const BASE = ""; // Vite proxies /api/* → http://localhost:8000
+const BASE = import.meta.env.VITE_API_BASE_URL || "";
 
 async function _handleResponse(res) {
   if (!res.ok) {
@@ -28,14 +28,13 @@ export async function cleanData(sessionId) {
 }
 
 /** Ask the LLM a question. Returns { answer } */
-export async function chatWithData({ sessionId, question, apiKey, modelName = "gemini-2.0-flash", useCleaned = true }) {
+export async function chatWithData({ sessionId, question, modelName = "gemini-2.0-flash", useCleaned = true }) {
   const res = await fetch(`${BASE}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       session_id:   sessionId,
       question:     question,
-      api_key:      apiKey,
       model_name:   modelName,
       use_cleaned:  useCleaned,
     }),
@@ -44,14 +43,13 @@ export async function chatWithData({ sessionId, question, apiKey, modelName = "g
 }
 
 /** Generate a chart PNG (base64) from a question. Returns { chart, spec } */
-export async function generateChart({ sessionId, question, apiKey, modelName = "gemini-2.0-flash", useCleaned = true }) {
+export async function generateChart({ sessionId, question, modelName = "gemini-2.0-flash", useCleaned = true }) {
   const res = await fetch(`${BASE}/api/chart`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       session_id:   sessionId,
       question:     question,
-      api_key:      apiKey,
       model_name:   modelName,
       use_cleaned:  useCleaned,
     }),

@@ -13,7 +13,7 @@ export default function CleaningReport({ report, cleanedProfile, sessionId, load
   return (
     <div className="card fade-up">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex-header-responsive mb-4">
         <div className="flex items-center gap-3">
           <div className={`step-badge ${report ? "step-done" : "step-active"}`}>
             {report ? "✓" : "2"}

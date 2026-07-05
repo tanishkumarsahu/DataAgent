@@ -81,7 +81,7 @@ function TypingIndicator() {
   );
 }
 
-export default function ChatPanel({ sessionId, apiKey, modelName, useCleaned }) {
+export default function ChatPanel({ sessionId, modelName, useCleaned }) {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
@@ -95,7 +95,9 @@ export default function ChatPanel({ sessionId, apiKey, modelName, useCleaned }) 
   const inputRef            = useRef(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messages.length > 1) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages, busy]);
 
   async function send() {
@@ -106,17 +108,13 @@ export default function ChatPanel({ sessionId, apiKey, modelName, useCleaned }) 
       alert("Please upload a dataset first.");
       return;
     }
-    if (!apiKey) {
-      alert("Please enter your Gemini API key in the sidebar. Get one free at https://aistudio.google.com/app/apikey");
-      return;
-    }
 
     setMessages(m => [...m, { role: "user", content: q, ts: Date.now() }]);
     setInput("");
     setBusy(true);
 
     try {
-      const chatRes = await chatWithData({ sessionId, question: q, apiKey, modelName, useCleaned });
+      const chatRes = await chatWithData({ sessionId, question: q, modelName, useCleaned });
 
       setMessages(m => [...m, {
         role: "assistant",
@@ -149,7 +147,7 @@ export default function ChatPanel({ sessionId, apiKey, modelName, useCleaned }) 
   return (
     <div className="card fade-up" style={{ display: "flex", flexDirection: "column", height: 540 }}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex-header-responsive mb-3">
         <div className="flex items-center gap-3">
           <div className="step-badge step-active">4</div>
           <div>

@@ -33,7 +33,7 @@ export default function UploadPanel({ onUpload, loading }) {
   }
 
   return (
-    <div className="card fade-up" style={{ maxWidth: 640, margin: "0 auto" }}>
+    <div className="card fade-up">
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <div className="step-badge step-active">1</div>

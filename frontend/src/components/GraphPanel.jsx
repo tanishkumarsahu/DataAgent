@@ -62,7 +62,7 @@ export default function GraphPanel({ sessionId, profile, useCleaned }) {
 
   return (
     <div className="card fade-up">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex-header-responsive mb-3">
         <div className="flex items-center gap-3">
           <div className="step-badge step-active">5</div>
           <div>
@@ -109,7 +109,7 @@ export default function GraphPanel({ sessionId, profile, useCleaned }) {
         </div>
       ) : (
         <>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+          <div className="responsive-grid-2" style={{ marginBottom: "1rem" }}>
             <div>
               <label style={{ fontSize: ".75rem", fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: ".06em", display: "block", marginBottom: ".35rem" }}>
                 Chart Type
@@ -140,7 +140,7 @@ export default function GraphPanel({ sessionId, profile, useCleaned }) {
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: needsNone ? "1fr" : "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+          <div className={needsNone ? "" : "responsive-grid-2"} style={{ display: needsNone ? "block" : "grid", gap: "1rem", marginBottom: "1rem" }}>
             {!needsNone && (
               <div>
                 <label style={{ fontSize: ".75rem", fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: ".06em", display: "block", marginBottom: ".35rem" }}>
